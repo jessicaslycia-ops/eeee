@@ -5,7 +5,7 @@ import './index.css';
 
 type Tab = 'buy' | 'clients' | 'admin';
 type BuyView = 'select' | 'local' | 'international';
-type Locale = 'id' | 'en';
+type Locale = 'id' | 'en';src/App.tsx
 
 interface Commission {
   id: number;
@@ -26,7 +26,7 @@ interface Setting {
   value: string;
 }
 
-const MAX_SLOTS = 5;
+const DEFAULT_MAX_SLOTS = 5;
 
 const COMMISSION_TYPES_EN = [
   { id: 'half', label: 'Half Body', price: '$49' },
@@ -177,32 +177,40 @@ async function apiFetch(path: string, options?: RequestInit) {
 
 function StarParticles() {
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const count = isMobile ? 40 : 80;
+  const count = isMobile ? 35 : 70;
   const particles = useRef<Array<{
     id: number; left: number; top: number; size: number;
-    delay: number; duration: number; floatDuration: number;
+    delay: number; duration: number; dx: number; dy: number;
   }>>([]);
   if (particles.current.length === 0) {
-    particles.current = Array.from({ length: count }, (_, i) => ({
-      id: i,
-      left: Math.random() * 100,
-      top: Math.random() * 100,
-      size: 1 + Math.random() * 2.5,
-      delay: Math.random() * 5,
-      duration: 2 + Math.random() * 4,
-      floatDuration: 8 + Math.random() * 12,
-    }));
+    particles.current = Array.from({ length: count }, (_, i) => {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 40 + Math.random() * 80;
+      return {
+        id: i,
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        size: 1 + Math.random() * 2,
+        delay: Math.random() * 18,
+        duration: 10 + Math.random() * 14,
+        dx: Math.cos(angle) * dist,
+        dy: Math.sin(angle) * dist,
+      };
+    });
   }
   return (
     <div className="fixed inset-0 pointer-events-none z-[1] overflow-hidden">
       {particles.current.map((p) => (
         <div key={p.id} className="absolute rounded-full"
           style={{
-            left: `${p.left}%`, top: `${p.top}%`, width: p.size, height: p.size,
-            background: 'rgba(255,255,255,0.7)',
-            boxShadow: `0 0 ${p.size * 2}px ${p.size * 0.5}px rgba(255,255,255,0.3)`,
-            animation: `twinkle ${p.duration}s ease-in-out ${p.delay}s infinite, floatParticle ${p.floatDuration}s ease-in-out ${p.delay}s infinite`,
-          }} />
+            left: `${p.left}%`, top: `${p.top}%`,
+            width: p.size, height: p.size,
+            background: 'rgba(255,255,255,0.85)',
+            boxShadow: `0 0 ${p.size * 3}px rgba(255,255,255,0.4)`,
+            '--dx': `${p.dx}px`,
+            '--dy': `${p.dy}px`,
+            animation: `particleLife ${p.duration}s ease-in-out ${p.delay}s infinite`,
+          } as React.CSSProperties} />
       ))}
     </div>
   );
@@ -210,6 +218,83 @@ function StarParticles() {
 
 function AuroraGlow() {
   return <div className="aurora-glow" aria-hidden="true" />;
+}
+
+function CursorGlow() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handle = (e: MouseEvent) => {
+      if (ref.current) {
+        ref.current.style.background = `radial-gradient(560px circle at ${e.clientX}px ${e.clientY}px, rgba(168,85,247,0.09), rgba(139,92,246,0.03) 45%, transparent 62%)`;
+      }
+    };
+    window.addEventListener('mousemove', handle, { passive: true });
+    return () => window.removeEventListener('mousemove', handle);
+  }, []);
+  return (
+    <div ref={ref} className="fixed inset-0 pointer-events-none z-[3]"
+      style={{ background: 'radial-gradient(560px circle at -999px -999px, rgba(168,85,247,0.09), transparent 62%)' }} />
+  );
+}
+
+const GOD_RAYS = [
+  { angle: -78, w: 55, opacity: 0.13, blur: 22, speed: 4.5 },
+  { angle: -62, w: 35, opacity: 0.10, blur: 14, speed: 5.5 },
+  { angle: -48, w: 70, opacity: 0.08, blur: 28, speed: 6.0 },
+  { angle: -33, w: 42, opacity: 0.12, blur: 16, speed: 4.0 },
+  { angle: -18, w: 58, opacity: 0.07, blur: 20, speed: 6.5 },
+  { angle:  -4, w: 30, opacity: 0.09, blur: 18, speed: 5.0 },
+  { angle:  12, w: 50, opacity: 0.06, blur: 26, speed: 7.0 },
+];
+
+function GodRays() {
+  const pRef = useRef<Array<{ id: number; x: number; y: number; size: number; delay: number; dur: number; dx: number; dy: number }>>([]);
+  if (pRef.current.length === 0) {
+    pRef.current = Array.from({ length: 16 }, (_, i) => ({
+      id: i,
+      x: 60 + Math.random() * 38,
+      y: Math.random() * 30,
+      size: 0.8 + Math.random() * 1.8,
+      delay: Math.random() * 9,
+      dur: 4 + Math.random() * 7,
+      dx: (Math.random() - 0.65) * 70,
+      dy: Math.random() * 90 + 15,
+    }));
+  }
+  return (
+    <div className="fixed inset-0 pointer-events-none z-[0] overflow-hidden">
+      {GOD_RAYS.map((ray, i) => (
+        <div key={i} className="absolute"
+          style={{
+            top: 0, right: 0,
+            width: `${ray.w}px`,
+            height: '155vh',
+            background: `linear-gradient(175deg, rgba(168,85,247,${ray.opacity}) 0%, rgba(139,92,246,${ray.opacity * 0.4}) 30%, transparent 68%)`,
+            transformOrigin: '100% 0%',
+            transform: `rotate(${ray.angle}deg)`,
+            filter: `blur(${ray.blur}px)`,
+            animation: `godRayPulse ${ray.speed}s ease-in-out ${i * 0.55}s infinite`,
+          }} />
+      ))}
+      <div className="absolute top-0 right-0 w-72 h-72"
+        style={{
+          background: 'radial-gradient(ellipse at 100% 0%, rgba(168,85,247,0.28) 0%, rgba(139,92,246,0.10) 38%, transparent 65%)',
+          filter: 'blur(32px)',
+          animation: 'godRayPulse 3.5s ease-in-out infinite',
+        }} />
+      {pRef.current.map((p) => (
+        <div key={p.id} className="absolute rounded-full"
+          style={{
+            left: `${p.x}%`, top: `${p.y}%`,
+            width: p.size, height: p.size,
+            background: 'rgba(216,180,254,0.95)',
+            boxShadow: `0 0 ${p.size * 5}px rgba(168,85,247,0.7)`,
+            '--dx': `${p.dx}px`, '--dy': `${p.dy}px`,
+            animation: `particleLife ${p.dur}s ease-in-out ${p.delay}s infinite`,
+          } as React.CSSProperties} />
+      ))}
+    </div>
+  );
 }
 
 function LockPopup({ show, locale, onClose }: { show: boolean; locale: Locale; onClose: () => void }) {
@@ -246,12 +331,54 @@ function LockPopup({ show, locale, onClose }: { show: boolean; locale: Locale; o
   );
 }
 
+function TitleEasterEggPopup({ show, onClose }: { show: boolean; onClose: () => void }) {
+  useEffect(() => {
+    if (!show) return;
+    const t = setTimeout(onClose, 6000);
+    return () => clearTimeout(t);
+  }, [show, onClose]);
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[200] flex items-center justify-center px-4"
+          style={{ background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(10px)' }}
+          onClick={onClose}>
+          <motion.div
+            initial={{ scale: 0.4, opacity: 0, rotate: -8 }}
+            animate={{ scale: 1, opacity: 1, rotate: 0 }}
+            exit={{ scale: 0.4, opacity: 0, rotate: 8 }}
+            transition={{ type: 'spring', stiffness: 280, damping: 18 }}
+            className="max-w-sm w-full p-8 rounded-3xl text-center"
+            style={{
+              background: 'rgba(15,3,3,0.97)',
+              border: '1px solid rgba(220,38,38,0.55)',
+              boxShadow: '0 0 60px rgba(220,38,38,0.35), inset 0 0 40px rgba(220,38,38,0.06)',
+            }}
+            onClick={(e) => e.stopPropagation()}>
+            <div className="text-5xl mb-4 select-none">👁️</div>
+            <h3 className="text-base font-bold text-red-300 mb-4 tracking-wide">⚠️ WARNING ⚠️</h3>
+            <p className="text-sm text-red-200/80 leading-relaxed">
+              You have been summoned Nurull to your house.<br />
+              <span className="text-red-300 font-semibold">Do not check under your bed at night.</span>
+            </p>
+            <button onClick={onClose}
+              className="mt-6 px-6 py-2.5 rounded-xl bg-red-500/12 border border-red-400/30 text-red-300 text-sm font-medium hover:bg-red-500/22 transition-all">
+              OK...
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 const glassStyle: React.CSSProperties = {
-  background: 'rgba(20,20,30,0.45)',
-  backdropFilter: 'blur(20px)',
-  WebkitBackdropFilter: 'blur(20px)',
-  border: '1px solid rgba(255,255,255,0.08)',
-  boxShadow: '0 0 30px rgba(128,0,255,0.15)',
+  background: 'rgba(12,10,22,0.62)',
+  backdropFilter: 'blur(40px)',
+  WebkitBackdropFilter: 'blur(40px)',
+  border: '1px solid rgba(255,255,255,0.09)',
+  boxShadow: '0 0 40px rgba(128,0,255,0.18)',
 };
 
 function GlassCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
@@ -277,6 +404,11 @@ function App() {
   const [adminToken, setAdminToken] = useState('');
   const [selectedClient, setSelectedClient] = useState<Commission | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [profileClickCount, setProfileClickCount] = useState(0);
+  const [profileAnimClass, setProfileAnimClass] = useState('');
+  const [titleClickCount, setTitleClickCount] = useState(0);
+  const [titleEasterEgg, setTitleEasterEgg] = useState(false);
+  const [maxSlots, setMaxSlots] = useState(DEFAULT_MAX_SLOTS);
 
   const fetchCommissions = useCallback(async (showLoading = true) => {
     if (showLoading) setLoading(true);
@@ -307,6 +439,8 @@ function App() {
       if (photo?.value) setProfilePhoto(photo.value);
       if (localLock?.value !== undefined) setLocalLocked(localLock.value === 'true');
       if (intlLock?.value !== undefined) setInternationalLocked(intlLock.value === 'true');
+      const slotsSetting = settingsArr.find((s: Setting) => s.key === 'max_slots');
+      if (slotsSetting?.value) setMaxSlots(parseInt(slotsSetting.value) || DEFAULT_MAX_SLOTS);
       setProfileLoaded(true);
     } catch {
       setProfileLoaded(true);
@@ -340,6 +474,29 @@ function App() {
     if (tab === 'buy') setBuyView('select');
   };
 
+  const handleProfileClick = () => {
+    if (profileAnimClass) return;
+    const next = profileClickCount + 1;
+    if (next >= 4) {
+      setProfileClickCount(0);
+      setProfileAnimClass('profile-slide-out');
+      setTimeout(() => setProfileAnimClass('profile-slide-in'), 2100);
+      setTimeout(() => setProfileAnimClass(''), 4300);
+    } else {
+      setProfileClickCount(next);
+    }
+  };
+
+  const handleTitleClick = () => {
+    const next = titleClickCount + 1;
+    if (next >= 4) {
+      setTitleClickCount(0);
+      setTitleEasterEgg(true);
+    } else {
+      setTitleClickCount(next);
+    }
+  };
+
   const handleRegionClick = (region: BuyView) => {
     if (region === 'local' && localLocked) {
       setLockPopupLocale('id');
@@ -362,8 +519,11 @@ function App() {
   return (
     <div className="min-h-screen animated-bg text-white overflow-x-hidden relative selection:bg-purple-500/30">
       <AuroraGlow />
+      <GodRays />
       <StarParticles />
+      <CursorGlow />
       <LockPopup show={lockPopupShow} locale={lockPopupLocale} onClose={() => setLockPopupShow(false)} />
+      <TitleEasterEggPopup show={titleEasterEgg} onClose={() => setTitleEasterEgg(false)} />
 
       {/* Sticky Header */}
       <header className="sticky top-0 z-50 pt-6 pb-3 px-4"
@@ -379,8 +539,25 @@ function App() {
             <div className="flex items-center gap-4 md:gap-5">
               <motion.div initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }}
                 transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.4 }}
-                className="relative shrink-0">
-                <div className="w-14 h-14 md:w-[72px] md:h-[72px] rounded-full overflow-hidden border-[2px] border-purple-400/40 shadow-[0_0_25px_rgba(168,85,247,0.3)] bg-[#0a0a0f] flex items-center justify-center breathe-glow profile-pulse">
+                className="shrink-0 flex flex-col items-center gap-1">
+                {/* Commission Open! speech bubble */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.5, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ delay: 0.6, type: 'spring', stiffness: 220, damping: 16 }}
+                  className="whitespace-nowrap pointer-events-none flex flex-col items-center">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold"
+                    style={{ background: 'rgba(16,185,129,0.18)', border: '1px solid rgba(16,185,129,0.35)', color: '#6ee7b7', boxShadow: '0 0 12px rgba(16,185,129,0.12)' }}>
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Commission Open!
+                  </div>
+                  {/* tail pointing down toward profile */}
+                  <div className="w-2 h-2 rotate-45 -mt-[1px]"
+                    style={{ background: 'rgba(16,185,129,0.18)', borderRight: '1px solid rgba(16,185,129,0.35)', borderBottom: '1px solid rgba(16,185,129,0.35)' }} />
+                </motion.div>
+
+                <div onClick={handleProfileClick}
+                  className={`cursor-pointer w-14 h-14 md:w-[72px] md:h-[72px] rounded-full overflow-hidden border-[2px] border-purple-400/40 shadow-[0_0_25px_rgba(168,85,247,0.3)] bg-[#0a0a0f] flex items-center justify-center breathe-glow profile-pulse ${profileAnimClass}`}>
                   {!profileLoaded ? (
                     <div className="w-5 h-5 border-2 border-purple-400/30 border-t-purple-400 rounded-full animate-spin" />
                   ) : profilePhoto ? (
@@ -391,9 +568,10 @@ function App() {
                 </div>
               </motion.div>
 
-              <motion.h1 className="text-3xl md:text-5xl font-bold tracking-tight"
+              <motion.h1 className="text-3xl md:text-5xl font-bold tracking-tight cursor-pointer select-none"
                 initial={{ opacity: 0, x: 15 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.7, delay: 0.5 }}
-                style={{ textShadow: '0 0 30px rgba(168,85,247,0.15)' }}>
+                style={{ textShadow: '0 0 30px rgba(168,85,247,0.15)' }}
+                onClick={handleTitleClick}>
                 <span className="bg-gradient-to-r from-purple-300 via-violet-300 to-indigo-300 bg-clip-text text-transparent">
                   NURULL COMMISSION
                 </span>
@@ -405,7 +583,7 @@ function App() {
             className="mt-3 flex items-center justify-center gap-2">
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-400/20">
               <Users className="w-3 h-3 text-purple-300" />
-              <span className="text-xs text-purple-200 font-medium">{acceptedCount}/{MAX_SLOTS} {txt.slotsFilled}</span>
+              <span className="text-xs text-purple-200 font-medium">{acceptedCount}/{maxSlots} {txt.slotsFilled}</span>
             </div>
             {localLocked && (
               <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-red-500/10 border border-red-400/20">
@@ -475,6 +653,7 @@ function App() {
               selectedClient={selectedClient} setSelectedClient={setSelectedClient} onUpdate={fetchCommissions}
               termsEn={termsEn} termsId={termsId} profilePhoto={profilePhoto}
               localLocked={localLocked} internationalLocked={internationalLocked}
+              maxSlots={maxSlots}
               onSettingsUpdate={fetchSettings} />
           )}
         </AnimatePresence>
@@ -786,12 +965,12 @@ function ClientList({ commissions, loading, error, lastUpdated, onRefresh, local
 }
 
 /* ─── Admin Section ─── */
-function AdminSection({ adminLoggedIn, setAdminLoggedIn, adminToken, setAdminToken, commissions, loading, error, lastUpdated, onRefresh, selectedClient, setSelectedClient, onUpdate, termsEn, termsId, profilePhoto, localLocked, internationalLocked, onSettingsUpdate }: {
+function AdminSection({ adminLoggedIn, setAdminLoggedIn, adminToken, setAdminToken, commissions, loading, error, lastUpdated, onRefresh, selectedClient, setSelectedClient, onUpdate, termsEn, termsId, profilePhoto, localLocked, internationalLocked, maxSlots, onSettingsUpdate }: {
   adminLoggedIn: boolean; setAdminLoggedIn: (v: boolean) => void; adminToken: string; setAdminToken: (v: string) => void;
   commissions: Commission[]; loading: boolean; error: string; lastUpdated: Date | null; onRefresh: () => void;
   selectedClient: Commission | null; setSelectedClient: (c: Commission | null) => void; onUpdate: () => void;
   termsEn: string; termsId: string; profilePhoto: string | null;
-  localLocked: boolean; internationalLocked: boolean; onSettingsUpdate: () => void;
+  localLocked: boolean; internationalLocked: boolean; maxSlots: number; onSettingsUpdate: () => void;
 }) {
   const txt = t['en'];
   const [password, setPassword] = useState('');
@@ -808,11 +987,14 @@ function AdminSection({ adminLoggedIn, setAdminLoggedIn, adminToken, setAdminTok
   const [lockSaved, setLockSaved] = useState(false);
   const [progressClient, setProgressClient] = useState<Commission | null>(null);
   const [progressValue, setProgressValue] = useState(0);
+  const [editMaxSlots, setEditMaxSlots] = useState(maxSlots);
+  const [slotsSaved, setSlotsSaved] = useState(false);
 
   useEffect(() => {
     setEditTermsEn(termsEn); setEditTermsId(termsId); setPhotoUrl(profilePhoto || '');
     setLocalLockOn(localLocked); setIntlLockOn(internationalLocked);
-  }, [termsEn, termsId, profilePhoto, localLocked, internationalLocked]);
+    setEditMaxSlots(maxSlots);
+  }, [termsEn, termsId, profilePhoto, localLocked, internationalLocked, maxSlots]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault(); setLoginError(''); setLoggingIn(true);
@@ -859,6 +1041,13 @@ function AdminSection({ adminLoggedIn, setAdminLoggedIn, adminToken, setAdminTok
   const savePhoto = async () => {
     try { await apiFetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'profile_photo', value: photoUrl }) }); setPhotoSaved(true); onSettingsUpdate(); setTimeout(() => setPhotoSaved(false), 2000); }
     catch { alert('Failed to save'); }
+  };
+
+  const saveMaxSlotsValue = async () => {
+    try {
+      await apiFetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'max_slots', value: String(editMaxSlots) }) });
+      setSlotsSaved(true); onSettingsUpdate(); setTimeout(() => setSlotsSaved(false), 2000);
+    } catch { alert('Failed to save'); }
   };
 
   const saveLocks = async () => {
@@ -1028,7 +1217,7 @@ function AdminSection({ adminLoggedIn, setAdminLoggedIn, adminToken, setAdminTok
         <div className="flex gap-3 mb-6 flex-wrap">
           {[
             { key: 'clients' as const, label: 'Clients' },
-            { key: 'slots' as const, label: `Slots (${acceptedCount}/${MAX_SLOTS})` },
+            { key: 'slots' as const, label: `Slots (${acceptedCount}/${maxSlots})` },
             { key: 'progress' as const, label: 'Progress' },
             { key: 'terms' as const, label: 'Terms' },
             { key: 'profile' as const, label: 'Profile' },
@@ -1084,12 +1273,30 @@ function AdminSection({ adminLoggedIn, setAdminLoggedIn, adminToken, setAdminTok
 
         {adminTab === 'slots' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-purple-200">Accepted Clients ({acceptedCount}/{MAX_SLOTS})</h3>
-              <div className="flex-1 mx-4 h-2 rounded-full bg-white/[0.06] overflow-hidden">
-                <div className="h-full rounded-full bg-gradient-to-r from-purple-500 to-violet-400" style={{ width: `${(acceptedCount / MAX_SLOTS) * 100}%` }} />
+            {/* Max slots editor */}
+            <div className="p-4 rounded-2xl bg-purple-500/[0.05] border border-purple-400/15">
+              <p className="text-xs text-gray-400 uppercase tracking-wider mb-3">Commission Slot Limit</p>
+              {slotsSaved && <p className="text-xs text-emerald-300 mb-2">{txt.saved}</p>}
+              <div className="flex items-center gap-3">
+                <button onClick={() => setEditMaxSlots(v => Math.max(1, v - 1))}
+                  className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.08] text-white text-lg font-bold hover:bg-white/[0.12] transition-all flex items-center justify-center">−</button>
+                <span className="text-3xl font-bold text-purple-200 tabular-nums w-12 text-center">{editMaxSlots}</span>
+                <button onClick={() => setEditMaxSlots(v => v + 1)}
+                  className="w-9 h-9 rounded-xl bg-white/[0.06] border border-white/[0.08] text-white text-lg font-bold hover:bg-white/[0.12] transition-all flex items-center justify-center">+</button>
+                <button onClick={saveMaxSlotsValue}
+                  className="ml-2 flex items-center gap-1.5 px-4 py-2 rounded-xl bg-purple-500/15 border border-purple-400/25 text-purple-200 text-sm hover:bg-purple-500/25 transition-all">
+                  <Save className="w-3.5 h-3.5" /> Save
+                </button>
               </div>
-              <span className="text-sm font-bold text-purple-300 tabular-nums">{Math.round((acceptedCount / MAX_SLOTS) * 100)}%</span>
+              <p className="text-[10px] text-gray-500 mt-2">Clients will see this number on the website.</p>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-purple-200">Accepted Clients ({acceptedCount}/{maxSlots})</h3>
+              <div className="flex-1 mx-4 h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                <div className="h-full rounded-full bg-gradient-to-r from-purple-500 to-violet-400" style={{ width: `${Math.min(100,(acceptedCount / maxSlots) * 100)}%` }} />
+              </div>
+              <span className="text-sm font-bold text-purple-300 tabular-nums">{Math.round((acceptedCount / maxSlots) * 100)}%</span>
             </div>
             {commissions.length === 0 ? (
               <div className="text-center py-8 text-gray-500"><p className="text-sm">No clients yet.</p></div>
