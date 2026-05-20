@@ -5,7 +5,7 @@ import './index.css';
 
 type Tab = 'buy' | 'clients' | 'admin';
 type BuyView = 'select' | 'local' | 'international';
-type Locale = 'id' | 'en';src/App.tsx
+type Locale = 'id' | 'en';
 
 interface Commission {
   id: number;
