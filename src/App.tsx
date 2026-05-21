@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PenLine, Users, ShieldCheck, Sparkles, X, Check, Trash2, Eye, ChevronLeft, Globe, MapPin, RefreshCw, Camera, Save, Pencil, User, Lock } from 'lucide-react';
 import './index.css';
-import BorderGlow from './BorderGlow';
+import BorderGlow from './components/BorderGlow';
 
 type Tab = 'buy' | 'clients' | 'admin';
 type BuyView = 'select' | 'local' | 'international';
